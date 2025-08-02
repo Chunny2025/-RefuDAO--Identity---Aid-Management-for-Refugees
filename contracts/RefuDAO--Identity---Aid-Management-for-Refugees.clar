@@ -3,6 +3,10 @@
 (define-constant ERR-ALREADY-REGISTERED (err u102))
 (define-constant ERR-INSUFFICIENT-FUNDS (err u103))
 (define-constant ERR-NOT-FOUND (err u104))
+(define-constant ERR-NOT-ELIGIBLE (err u105))
+
+(define-constant MIN-AID-INTERVAL u144)
+(define-constant MAX-AID-PER-PERIOD u1000000)
 
 (define-data-var dao-admin principal tx-sender)
 (define-data-var aid-pool uint u0)
@@ -74,6 +78,16 @@
         (asserts! (default-to false (map-get? verified-ngos tx-sender)) ERR-NOT-AUTHORIZED)
         (ok (map-set aid-proposals proposal-id
             (merge proposal { votes: (+ (get votes proposal) u1) })))))
+(define-private (is-aid-eligible (refugee-data {id-hash: (buff 32), status: bool, aid-received: uint, last-aid-date: uint}) (requested-amount uint))
+    (let (
+        (blocks-since-aid (- burn-block-height (get last-aid-date refugee-data)))
+        (period-aid-total (if (< blocks-since-aid MIN-AID-INTERVAL) (get aid-received refugee-data) u0))
+    )
+        (and 
+            (get status refugee-data)
+            (>= blocks-since-aid MIN-AID-INTERVAL)
+            (<= (+ period-aid-total requested-amount) MAX-AID-PER-PERIOD))))
+
 (define-public (execute-proposal (proposal-id uint))
     (let (
         (proposal (unwrap! (map-get? aid-proposals proposal-id) ERR-NOT-FOUND))
@@ -83,6 +97,7 @@
         (asserts! (default-to false (map-get? verified-ngos tx-sender)) ERR-NOT-AUTHORIZED)
         (asserts! (>= (get votes proposal) u3) ERR-NOT-AUTHORIZED)
         (asserts! (not (get executed proposal)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-aid-eligible refugee-data (get amount proposal)) ERR-NOT-ELIGIBLE)
         (try! (as-contract (stx-transfer? (get amount proposal) tx-sender (get beneficiary proposal))))
         (map-set refugee-identities (get beneficiary proposal)
             (merge refugee-data 
@@ -101,3 +116,17 @@
 
 (define-read-only (get-aid-pool-balance)
     (var-get aid-pool))
+
+(define-read-only (check-aid-eligibility (refugee-address principal) (requested-amount uint))
+    (match (map-get? refugee-identities refugee-address)
+        refugee-data (is-aid-eligible refugee-data requested-amount)
+        false))
+
+(define-read-only (get-blocks-until-eligible (refugee-address principal))
+    (match (map-get? refugee-identities refugee-address)
+        refugee-data 
+            (let ((blocks-since-aid (- burn-block-height (get last-aid-date refugee-data))))
+                (if (>= blocks-since-aid MIN-AID-INTERVAL)
+                    u0
+                    (- MIN-AID-INTERVAL blocks-since-aid)))
+        u0))
