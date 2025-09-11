@@ -10,6 +10,7 @@
 
 (define-data-var dao-admin principal tx-sender)
 (define-data-var aid-pool uint u0)
+(define-data-var contract-paused bool false)
 
 (define-map verified-ngos principal bool)
 (define-map refugee-identities 
@@ -40,6 +41,11 @@
         (asserts! (is-eq tx-sender (var-get dao-admin)) ERR-NOT-AUTHORIZED)
         (ok (map-set verified-ngos ngo-address true))))
 
+(define-public (toggle-pause)
+    (begin
+        (asserts! (is-eq tx-sender (var-get dao-admin)) ERR-NOT-AUTHORIZED)
+        (ok (var-set contract-paused (not (var-get contract-paused))))))
+
 (define-public (register-refugee (refugee-address principal) (identity-hash (buff 32)))
     (begin
 
@@ -57,6 +63,7 @@
 
 (define-public (deposit-aid)
     (begin
+        (asserts! (not (var-get contract-paused)) ERR-NOT-AUTHORIZED)
         (var-set aid-pool (+ (var-get aid-pool) (stx-get-balance tx-sender)))
         (ok (stx-transfer? (stx-get-balance tx-sender) tx-sender (as-contract tx-sender)))))
 
@@ -93,7 +100,7 @@
         (proposal (unwrap! (map-get? aid-proposals proposal-id) ERR-NOT-FOUND))
         (refugee-data (unwrap! (map-get? refugee-identities (get beneficiary proposal)) ERR-NOT-FOUND))
     )
-
+        (asserts! (not (var-get contract-paused)) ERR-NOT-AUTHORIZED)
         (asserts! (default-to false (map-get? verified-ngos tx-sender)) ERR-NOT-AUTHORIZED)
         (asserts! (>= (get votes proposal) u3) ERR-NOT-AUTHORIZED)
         (asserts! (not (get executed proposal)) ERR-NOT-AUTHORIZED)
