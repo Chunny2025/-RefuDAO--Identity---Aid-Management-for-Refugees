@@ -61,6 +61,12 @@
             }
         ))))
 
+(define-public (update-refugee-status (refugee-address principal) (new-status bool))
+   (begin
+       (asserts! (default-to false (map-get? verified-ngos tx-sender)) ERR-NOT-AUTHORIZED)
+       (let ((current-data (unwrap! (map-get? refugee-identities refugee-address) ERR-NOT-FOUND)))
+           (ok (map-set refugee-identities refugee-address (merge current-data { status: new-status }))))))
+
 (define-public (deposit-aid)
     (begin
         (asserts! (not (var-get contract-paused)) ERR-NOT-AUTHORIZED)

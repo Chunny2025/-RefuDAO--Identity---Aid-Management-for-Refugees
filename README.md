@@ -1,4 +1,4 @@
-# 🏛️ RefuDAO: Identity & Aid Management for Refugees
+# Identity & Aid Management for Refugees
 
 ## 🎯 Overview
 RefuDAO is a decentralized solution for managing refugee identities and aid distribution using blockchain technology. The system enables trusted NGOs to verify refugee identities and coordinate aid disbursement through a transparent DAO structure.
@@ -9,6 +9,7 @@ RefuDAO is a decentralized solution for managing refugee identities and aid dist
 - 💰 Transparent aid pool management
 - 🗳️ Democratic aid distribution through proposals
 - 📊 Aid tracking and reporting
+- 🔄 Dynamic refugee status management
 
 ## 🚀 Getting Started
 
@@ -24,6 +25,7 @@ RefuDAO is a decentralized solution for managing refugee identities and aid dist
 
 #### For NGOs
 - `register-refugee`: Register and verify refugee identities
+- `update-refugee-status`: Update refugee active status
 - `create-aid-proposal`: Create proposals for aid distribution
 - `vote-proposal`: Vote on existing aid proposals
 - `execute-proposal`: Execute approved aid proposals
