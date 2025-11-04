@@ -10,6 +10,7 @@ RefuDAO is a decentralized solution for managing refugee identities and aid dist
 - 🗳️ Democratic aid distribution through proposals
 - 📊 Aid tracking and reporting
 - 🔄 Dynamic refugee status management
+- 🚨 Emergency aid distribution for critical situations
 
 ## 🚀 Getting Started
 
@@ -22,6 +23,7 @@ RefuDAO is a decentralized solution for managing refugee identities and aid dist
 #### For Administrators
 - `register-ngo`: Register trusted NGO organizations
 - `deposit-aid`: Add funds to the aid pool
+- `emergency-aid`: Provide immediate aid to eligible refugees bypassing proposal process
 
 #### For NGOs
 - `register-refugee`: Register and verify refugee identities

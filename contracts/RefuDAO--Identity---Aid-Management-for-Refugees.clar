@@ -136,10 +136,26 @@
         false))
 
 (define-read-only (get-blocks-until-eligible (refugee-address principal))
-    (match (map-get? refugee-identities refugee-address)
-        refugee-data 
-            (let ((blocks-since-aid (- burn-block-height (get last-aid-date refugee-data))))
-                (if (>= blocks-since-aid MIN-AID-INTERVAL)
-                    u0
-                    (- MIN-AID-INTERVAL blocks-since-aid)))
-        u0))
+     (match (map-get? refugee-identities refugee-address)
+         refugee-data
+             (let ((blocks-since-aid (- burn-block-height (get last-aid-date refugee-data))))
+                 (if (>= blocks-since-aid MIN-AID-INTERVAL)
+                     u0
+                     (- MIN-AID-INTERVAL blocks-since-aid)))
+         u0))
+
+(define-public (emergency-aid (refugee-address principal) (amount uint))
+    (let ((refugee-data (unwrap! (map-get? refugee-identities refugee-address) ERR-NOT-FOUND)))
+        (asserts! (is-eq tx-sender (var-get dao-admin)) ERR-NOT-AUTHORIZED)
+        (asserts! (not (var-get contract-paused)) ERR-NOT-AUTHORIZED)
+        (asserts! (<= amount (var-get aid-pool)) ERR-INSUFFICIENT-FUNDS)
+        (asserts! (is-aid-eligible refugee-data amount) ERR-NOT-ELIGIBLE)
+        (try! (as-contract (stx-transfer? amount tx-sender refugee-address)))
+        (map-set refugee-identities refugee-address
+            (merge refugee-data
+                {
+                    aid-received: (+ (get aid-received refugee-data) amount),
+                    last-aid-date: burn-block-height
+                }))
+        (var-set aid-pool (- (var-get aid-pool) amount))
+        (ok true)))
