@@ -1,3 +1,4 @@
+
 (define-constant ERR-NOT-AUTHORIZED (err u100))
 (define-constant ERR-INVALID-ID (err u101))
 (define-constant ERR-ALREADY-REGISTERED (err u102))
@@ -159,3 +160,8 @@
                 }))
         (var-set aid-pool (- (var-get aid-pool) amount))
         (ok true)))
+
+(define-public (transfer-admin (new-admin principal))
+    (begin
+        (asserts! (is-eq tx-sender (var-get dao-admin)) ERR-NOT-AUTHORIZED)
+        (ok (var-set dao-admin new-admin))))
